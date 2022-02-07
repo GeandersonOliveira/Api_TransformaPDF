@@ -22,7 +22,7 @@ app.UseHttpsRedirection();
 app.MapPost("/api/ConcatenaPdfsByUrl", async Task<IResult> ([FromBody] IEnumerable<string> urls, TransformaPdfCore transforma) =>
 {
     var output = await transforma.PdfConcatenation(urls);
-    return Results.File(output, "application/octet-stream");
+    return Results.File(output, "application/octet-stream","FileMerged.pdf");
 
 }).WithTags("ConcatenarPdfsByUrl");
 
@@ -41,7 +41,7 @@ app.MapPost("/api/ConcatenarPdfs", async (HttpRequest req) =>
     {
         var arquivosBytes = await PdfTools.ObterArquivos(arquivos);
         var output = TransformaPdfCore.PdfConcatenation(arquivosBytes);
-        return Results.File(output, "application/octet-stream");
+        return Results.File(output, "application/octet-stream", "FileMerged.pdf");
     }
 
     return Results.BadRequest();
@@ -62,7 +62,7 @@ app.MapPost("/api/ConcatenaUrlEArquivo", async Task<IResult> (HttpRequest reques
     {
         var arquivosBytes = await PdfTools.ObterArquivo(formFile);
         var output = await transforma.ConcatenarUrlEArquivo(url, arquivosBytes);
-        return Results.File(output, "application/octet-stream");
+        return Results.File(output, "application/octet-stream", "FileMerged");
     }
     return Results.BadRequest();
 
