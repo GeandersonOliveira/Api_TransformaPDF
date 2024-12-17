@@ -46,8 +46,6 @@ app.MapPost("/api/ConcatenarPdfs", async (HttpRequest req) =>
 
 }).Accepts<IFormFileCollection>("multipart/form-data").WithTags("ConcatenarPdfs");
 
-//endpoint para concatenar utilizando arquivos(IFormFile) e url(esta por querystring)
-
 // Endpoint: Concatenar PDFs combinando arquivos e URL
 app.MapPost("/api/ConcatenaUrlEArquivo", async Task<IResult> (
     HttpRequest request,
