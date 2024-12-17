@@ -5,63 +5,36 @@ namespace Business
 {
     public class TamanhoPapel
     {
-        public static PdfDocument TipoPapel(string? tamanho, PdfDocument pdfdoc) //metodo chamado caso o parametro tamanho seja passado
+        public static PdfDocument TipoPapel(string? tamanho, PdfDocument pdfdoc)
 
         {
-            if (tamanho != null) { tamanho = tamanho.ToUpper(); }
-            switch (tamanho)
+            if (!string.IsNullOrWhiteSpace(tamanho))
             {
-                case "A0":
-                    pdfdoc.SetDefaultPageSize(PageSize.A0);
-                    break;
+                tamanho = tamanho.ToUpper();
+                var tamanhos = new Dictionary<string, PageSize>
+                {
+                    { "A0", PageSize.A0 },
+                    { "A1", PageSize.A1 },
+                    { "A2", PageSize.A2 },
+                    { "A3", PageSize.A3 },
+                    { "A4", PageSize.A4 },
+                    { "A5", PageSize.A5 },
+                    { "B0", PageSize.B0 },
+                    { "B1", PageSize.B1 },
+                    { "B2", PageSize.B2 },
+                    { "B3", PageSize.B3 },
+                    { "EXECUTIVE", PageSize.EXECUTIVE },
+                    { "LETTER", PageSize.LETTER }
+                };
 
-                case "A1":
-                    pdfdoc.SetDefaultPageSize(PageSize.A1);
-                    break;
-
-                case "A2":
-                    pdfdoc.SetDefaultPageSize(PageSize.A2);
-                    break;
-
-                case "A3":
-                    pdfdoc.SetDefaultPageSize(PageSize.A3);
-                    break;
-
-                case "A4":
-                    pdfdoc.SetDefaultPageSize(PageSize.A4);
-                    break;
-
-                case "A5":
-                    pdfdoc.SetDefaultPageSize(PageSize.A5);
-                    break;
-
-                case "B0":
-                    pdfdoc.SetDefaultPageSize(PageSize.B0);
-                    break;
-
-                case "B1":
-                    pdfdoc.SetDefaultPageSize(PageSize.B1);
-                    break;
-
-                case "B2":
-                    pdfdoc.SetDefaultPageSize(PageSize.B2);
-                    break;
-
-                case "B3":
-                    pdfdoc.SetDefaultPageSize(PageSize.B3);
-                    break;
-
-                case "EXECUTIVE":
-                    pdfdoc.SetDefaultPageSize(PageSize.EXECUTIVE);
-                    break;
-
-                case "LETTER":
-                    pdfdoc.SetDefaultPageSize(PageSize.LETTER);
-                    break;
-
-                default:
-                    pdfdoc.SetDefaultPageSize(PageSize.A4);
-                    break;
+                if (tamanhos.TryGetValue(tamanho, out var pageSize))
+                {
+                    pdfdoc.SetDefaultPageSize(pageSize);
+                }
+                else
+                {
+                    pdfdoc.SetDefaultPageSize(PageSize.A4); // Padrão
+                }
             }
             return pdfdoc;
         }
