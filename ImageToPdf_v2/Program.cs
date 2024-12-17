@@ -2,51 +2,70 @@ using Business;
 using Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+//config services
 builder.Services.AddCors();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<JsonData>();
+
 var app = builder.Build();
 
+//config middlewares
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors(options =>
             options.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 app.UseHttpsRedirection();
 
+//verify health
 app.MapGet("/health/live", () =>
 {
     return Results.Ok();
 });
 
-//endpoint que recebe a imagem como url e faz a transformação para Pdf
 
+//URI image to PDF
 app.MapPost("/api/ImagePdf", async Task<IResult> (string file, string? tamanho, bool? paisagem, JsonData jsonData) =>
 {
-    var documentoBytes = await jsonData.GetAndReadByteArrayAsync(file);
-    var output = ImagePdf.ImagemToPdf(documentoBytes, tamanho, paisagem);
-    return Results.File(output, "application/octet-stream", "File.pdf");
+    if (string.IsNullOrWhiteSpace(file))
+        return Results.BadRequest("File URL cannot be empty.");
+
+    try
+    {
+        var documentoBytes = await jsonData.GetAndReadByteArrayAsync(file);
+        var output = ImagePdf.ImagemToPdf(documentoBytes, tamanho, paisagem);
+        return Results.File(output, "application/pdf", "File.pdf");
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(ex.Message);
+    }
 });
 
-//endpoint que recebe a imagem como arquivo (IFormFile) e faz a transformação para PDF
-
+//image to PDF
 app.MapPost("/api/ImagePdfByFile", async Task<IResult> (HttpRequest request, string? tamanho, bool? paisagem) =>
 {
     if (!request.HasFormContentType)
-        return Results.BadRequest();
+        return Results.BadRequest("Invalid form content type.");
 
-    var file = await request.ReadFormAsync();
-    var formFile = file.Files;
+    var form = await request.ReadFormAsync();
+    var formFile = form.Files;
 
-    if (formFile != null)
+    if (formFile == null)
+        return Results.BadRequest("No file was provided.");
+
+    try
     {
         var documentoBytes = await PdfTools.ObterArquivo(formFile);
         var output = ImagePdf.ImagemToPdf(documentoBytes, tamanho, paisagem);
-        return Results.File(output, "application/octet-stream", "File.pdf");
+        return Results.File(output, "application/pdf", "File.pdf");
     }
-    return Results.BadRequest();
-
+    catch (Exception ex)
+    {
+        return Results.Problem(ex.Message);
+    }
 });
 
 app.Run();

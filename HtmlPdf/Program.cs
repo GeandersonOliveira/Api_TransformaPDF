@@ -14,13 +14,22 @@ app.UseCors(options =>
 
 app.MapPost("/api/HtmlToPdf", ([FromBody] string html) => //A string deve ser em formato JSON. Caso contrario retornara 400.
 {
-    var output = TransformaToPdf.HtmlPdf(html);
-    return Results.Ok(new ApiResponse<byte[]>(200, "success", output));
+    if (string.IsNullOrWhiteSpace(html))
+        return Results.BadRequest(new ApiResponse<string>(400, "HTML input is empty"));
+    try
+    {
+        var output = TransformaToPdf.HtmlPdf(html);
+        return Results.Ok(new ApiResponse<byte[]>(200, "success", output));
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(ex.Message);
+    }
 });
 
 app.MapGet("/health/live", () =>
 {
-    return Results.Ok();
+    return Results.Ok("API is live and healthy");
 });
 
 app.Run();
@@ -31,24 +40,16 @@ internal record TransformaToPdf
     {
         using var output = new MemoryStream();
         HtmlConverter.ConvertToPdf(html, output);
-        var array = output.ToArray();
-        output.Close();
-        return array;
+        return output.ToArray();
     }
 }
-class ApiResponse<T>
+internal class ApiResponse<T>
 {
     public int StatusCode { get; set; }
     public string Message { get; set; }
     public string StackTrace { get; set; }
     public T Data { get; set; }
 
-
-    public ApiResponse(ApiResponse<object> errorResponse)
-    {
-        StatusCode = errorResponse.StatusCode;
-        Message = errorResponse.Message;
-    }
 
     public ApiResponse(int statusCode, string message = default, T data = default, string stackTrace = default)
     {
@@ -60,19 +61,14 @@ class ApiResponse<T>
 
     private string GetDefaultMessageForStatusCode(int statusCode)
     {
-        switch (statusCode)
+        return statusCode switch
         {
-            case 400:
-                return "Bad request";
-            case 401:
-                return "Authorized";
-            case 404:
-                return "Resource not found";
-            case 500:
-                return "Internal server error";
-            default:
-                return null;
-        }
+            400 => "Bad request",
+            401 => "Unauthorized",
+            404 => "Resource not found",
+            500 => "Internal server error",
+            _ => "An error occurred"
+        };
     }
 
 }
