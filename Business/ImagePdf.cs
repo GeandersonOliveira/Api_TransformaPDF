@@ -8,8 +8,8 @@ namespace Business
 {
     public class ImagePdf
     {
-        public static byte[] ImagemToPdf(byte[] file, string? tamanho, bool? paisagem) // metódo que usa itext para transformar e manipular o pdf
-                                                                                       // parametros : file => a imagem | tamanho => tipo de papel | paisagem => orientação do papel
+        public static byte[] ImagemToPdf(byte[] file, string? tamanho, bool? paisagem) 
+                                                                                      
         {
             using var stream = new MemoryStream();
 
@@ -23,6 +23,9 @@ namespace Business
 
             // Define tamanho de papel
             DefineTamanhoPapel(tamanho, pdfDocument, image);
+
+            // Define orientação do papel
+            AjustaOrientacao(paisagem, pdfDocument, image);
 
             // Adiciona imagem ao documento
             image.SetRelativePosition(0, 0, 0, 0);
@@ -60,6 +63,20 @@ namespace Business
                 }
             }
         }
+        private static void AjustaOrientacao(bool? paisagem, PdfDocument pdfDocument, Image image)
+        {
+            var pageSize = pdfDocument.GetDefaultPageSize();
+
+            if (paisagem == true || (image.GetImageWidth() > image.GetImageHeight()))
+            {
+                pdfDocument.SetDefaultPageSize(pageSize.Rotate());
+            }
+
+            if (image.GetImageScaledHeight() > pageSize.GetHeight() || image.GetImageScaledWidth() > pageSize.GetWidth())
+            {
+                image.SetAutoScale(true);
+            }
+        }
 
     }
-    }
+}
