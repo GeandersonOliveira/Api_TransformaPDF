@@ -17,8 +17,7 @@ app.UseCors(options =>
             options.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 app.UseHttpsRedirection();
 
-//endpoint para concatenar utilizando apenas urls de pdf. Devem vir em formato JSON => ["exemple_1.pdf","example_2.pdf"]
-
+// Concatenar PDFs a partir de URLs (JSON)
 app.MapPost("/api/ConcatenaPdfsByUrl", async Task<IResult> ([FromBody] IEnumerable<string> urls, TransformaPdfCore transforma) =>
 {
     var output = await transforma.PdfConcatenation(urls);
@@ -26,8 +25,7 @@ app.MapPost("/api/ConcatenaPdfsByUrl", async Task<IResult> ([FromBody] IEnumerab
 
 }).WithTags("ConcatenarPdfsByUrl");
 
-//endpoint para concatenar utilizando arquivos pdf (IFormFileCollection)
-
+// Endpoint: Concatenar PDFs enviados como arquivo
 app.MapPost("/api/ConcatenarPdfs", async (HttpRequest req) =>
 {
     if (!req.HasFormContentType)
@@ -50,21 +48,27 @@ app.MapPost("/api/ConcatenarPdfs", async (HttpRequest req) =>
 
 //endpoint para concatenar utilizando arquivos(IFormFile) e url(esta por querystring)
 
-app.MapPost("/api/ConcatenaUrlEArquivo", async Task<IResult> (HttpRequest request, string url, TransformaPdfCore transforma) =>
+// Endpoint: Concatenar PDFs combinando arquivos e URL
+app.MapPost("/api/ConcatenaUrlEArquivo", async Task<IResult> (
+    HttpRequest request,
+    string url,
+    TransformaPdfCore transforma) =>
 {
+    if (string.IsNullOrWhiteSpace(url))
+        return Results.BadRequest("URL não fornecida.");
+
     if (!request.HasFormContentType)
         return Results.BadRequest();
 
-    var file = await request.ReadFormAsync();
-    var formFile = file.Files;
+    var form = await request.ReadFormAsync();
+    var arquivos = form.Files;
 
-    if (formFile != null && formFile.Count() != 0)
-    {
-        var arquivosBytes = await PdfTools.ObterArquivo(formFile);
-        var output = await transforma.ConcatenarUrlEArquivo(url, arquivosBytes);
-        return Results.File(output, "application/octet-stream", "FileMerged");
-    }
-    return Results.BadRequest();
+    if (arquivos == null || arquivos.Count == 0)
+        return Results.BadRequest("Nenhum arquivo fornecido.");
+
+    var arquivosBytes = await PdfTools.ObterArquivo(arquivos);
+    var output = await transforma.ConcatenarUrlEArquivo(url, arquivosBytes);
+    return Results.File(output, "application/octet-stream", "FileMerged.pdf");
 
 }).WithTags("ConcatenaUrlEArquivo");
 
